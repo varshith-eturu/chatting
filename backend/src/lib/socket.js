@@ -1,4 +1,4 @@
-import server from "socket.io"
+import Server from "socket.io"
 import http, { Server } from "http"
 import express from "express";
 import { setRandomFallback } from "bcryptjs";
