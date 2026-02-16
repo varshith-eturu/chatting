@@ -49,7 +49,7 @@ export const sendMessage = async (req, res) => {
             text, 
             image: imageUrl
         });
-
+        console.log(newMessage);
         await newMessage.save();
         // todo: add socket event here
         const receiverSocketId = getReceiverSocketId(receiverId);

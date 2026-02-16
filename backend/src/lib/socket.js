@@ -11,26 +11,35 @@ const io = new Server(server, {
   },
 });
 
+// ✅ Use Map instead of object (safer & cleaner)
+const userSocketMap = new Map(); // userId -> socketId
+
 export function getReceiverSocketId(userId) {
-  return userSocketMap[userId];
+  return userSocketMap.get(userId);
 }
 
-// used to store online users
-const userSocketMap = {}; // {userId: socketId}
-
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
+  console.log("A user connected:", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
 
-  // io.emit() is used to send events to all the connected clients
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  if (userId) {
+    // ✅ Replace existing socket if user reconnects
+    userSocketMap.set(userId, socket.id);
+  }
+
+  // Send updated online users list to everyone
+  io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
-    delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    console.log("A user disconnected:", socket.id);
+
+    // ✅ IMPORTANT: Only remove if this socket is still the active one
+    if (userSocketMap.get(userId) === socket.id) {
+      userSocketMap.delete(userId);
+    }
+
+    io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
   });
 });
 

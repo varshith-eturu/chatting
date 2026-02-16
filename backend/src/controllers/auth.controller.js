@@ -5,9 +5,9 @@ import cloudinary from "../lib/cloudinary.js";
 
 
 export const signup = async(req, res) => {
-  const { email, password, fulName } = req.body;
+  const { email, password, fullName } = req.body;
   try {
-    if(!email || !password || !fulName) {
+    if(!email || !password || !fullName) {
       return res.status(400).json({ message: "Please provide all required fields" });
     }
     if(password.length < 6) {
@@ -22,7 +22,7 @@ export const signup = async(req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      fulName
+      fullName
     });
 
     if(newUser) {
@@ -31,9 +31,9 @@ export const signup = async(req, res) => {
       return  res.status(201).json({ 
         message: "User registered successfully", 
         user: {
-          id: newUser._id,
+          _id: newUser._id,
           email: newUser.email,
-          fulName: newUser.fulName,
+          fullName: newUser.fullName,
           profilePic: newUser.profilePic
         }
       });
@@ -61,9 +61,9 @@ export const login = async (req, res) => {
     return res.status(200).json({ 
       message: "Login successful", 
       user: {
-        id: user._id,
+        _id: user._id,
         email: user.email,
-        fulName: user.fulName,
+        fullName: user.fullName,
         profilePic: user.profilePic
       }
     });

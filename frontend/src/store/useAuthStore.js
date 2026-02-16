@@ -58,15 +58,19 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
-    try {
-      await axiosInstance.post("/auth/logout");
-      set({ authUser: null });
-      toast.success("Logged out successfully");
-      get().disconnectSocket();
-    } catch (error) {
-      toast.error(error.response.data.message);
-    }
-  },
+  try {
+    await axiosInstance.post("/auth/logout");
+
+    get().disconnectSocket(); // disconnect first
+
+    set({ authUser: null });
+
+    toast.success("Logged out successfully");
+  } catch (error) {
+    toast.error(error.response.data.message);
+  }
+},
+
 
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
@@ -83,23 +87,46 @@ export const useAuthStore = create((set, get) => ({
   },
 
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
+  const { authUser, socket } = get();
 
-    const socket = io(BASE_URL, {
-      query: {
-        userId: authUser._id,
-      },
-    });
-    socket.connect();
+  if (!authUser) return;
 
-    set({ socket: socket });
+  // 🔥 If old socket exists, fully clean it first
+  if (socket) {
+    socket.removeAllListeners();
+    socket.disconnect();
+  }
 
-    socket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
-    });
-  },
+  const newSocket = io(BASE_URL, {
+    query: {
+      userId: authUser._id,
+    },
+  });
+
+  set({ socket: newSocket });
+
+  newSocket.on("connect", () => {
+    console.log("Socket connected:", newSocket.id);
+  });
+
+  newSocket.on("getOnlineUsers", (userIds) => {
+    set({ onlineUsers: userIds });
+  });
+
+  newSocket.on("disconnect", () => {
+    console.log("Socket disconnected");
+  });
+},
+
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
-  },
+  const socket = get().socket;
+
+  if (socket) {
+    socket.removeAllListeners();
+    socket.disconnect();
+  }
+
+  set({ socket: null, onlineUsers: [] });
+},
+
 }));
